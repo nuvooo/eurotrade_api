@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+    web:
+        build:
+          context: .
+          dockerfile: ./infra/docker/nginx/Dockerfile
+        ports:
+            - "80:80"
+            - "443:443"
+        volumes:
+            - ./src:/var/www/html
+            - ./infra/docker/nginx//default.conf:/etc/nginx/conf.d/default.conf
+        links:
+            - php-fpm
+    php-fpm:
+      build:
+        context: .
+        dockerfile: ./infra/docker/php/Dockerfile
+      volumes:
+              - ./src:/var/www/html
+    db:
+        build:
+          context: .
+          dockerfile: ./infra/docker/mysql/Dockerfile
+        ports:
+          - target: 3306
+            published: ${DB_PORT:-3306}
+            protocol: tcp
+            mode: host
+        volumes:
+          - type: volume
+            target: /var/lib/mysql
+            volume:
+              nocopy: true
+        environment:
+          - MYSQL_DATABASE=${DB_NAME:-laravel_local}
+          - MYSQL_USER=${DB_USER:-phper}
+          - MYSQL_PASSWORD=${DB_PASS:-secret}
+          - MYSQL_ROOT_PASSWORD=${DB_PASS:-secret}
